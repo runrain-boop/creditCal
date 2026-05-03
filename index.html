@@ -496,22 +496,32 @@ function setPay(m){
 
 function initChips(){
   var el=document.getElementById('mchips'),h='';
+  var idx=0;
   MG.forEach(function(g){
     h+='<span class="grp-lbl">'+g.g+'</span>';
     g.items.forEach(function(m){
-      var data=JSON.stringify(m).replace(/"/g,'&quot;');
-      h+='<button class="chip'+(m.sp?' sp':'')+'" onclick="selM('+data+')">'+m.l+'</button>';
+      h+='<button class="chip'+(m.sp?' sp':'')+'" data-idx="'+idx+'">'+m.l+'</button>';
+      idx++;
     });
   });
   el.innerHTML=h;
+  // 用 event delegation 統一處理點擊
+  el.addEventListener('click',function(e){
+    var btn=e.target.closest('button.chip');
+    if(!btn)return;
+    var i=parseInt(btn.getAttribute('data-idx'));
+    var flat=[];
+    MG.forEach(function(g){g.items.forEach(function(m){flat.push(m);});});
+    if(flat[i])selM(flat[i],btn);
+  });
 }
 
 var selMD=null;
-function selM(m){
+function selM(m,btn){
   selMD=m;
   document.getElementById('merchant').value=m.l;
   document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
-  if(event&&event.target)event.target.classList.add('on');
+  if(btn)btn.classList.add('on');
   // 自動切換刷卡模式
   if(m.ol){setMode('onl');}
   else if(['交通','速食-mcd','超商','超市','餐廳','加油','飲-sp','飲','日系','百貨','藥妝','捷運-嗶','捷運-碼','高鐵','台鐵'].indexOf(m.cat)>=0){setMode('phy');}
