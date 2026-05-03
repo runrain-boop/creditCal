@@ -45,10 +45,9 @@ input:focus,select:focus{outline:none;border-color:#059669;box-shadow:0 0 0 3px 
 .pb{display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:12px;border:1.5px solid #e5e7eb;cursor:pointer;background:#fff;color:#6b7280;font-size:12px;gap:4px;font-family:inherit;min-height:62px;font-weight:500}
 .pb.on{border-color:#059669;background:#f0fdf4;color:#065f46;font-weight:600}
 .pi{font-size:22px;line-height:1}
-.cbtn{width:100%;padding:17px;background:#111;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;margin-top:12px;font-family:inherit;letter-spacing:.02em}
+.cbtn{width:100%;padding:17px;background:#111;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;margin-top:12px;font-family:inherit}
 .cbtn:active{opacity:.8}
 .save-btn{width:100%;padding:17px;background:#059669;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;margin-top:12px;font-family:inherit}
-.save-btn:active{opacity:.8}
 .sbar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .sc{background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:10px;text-align:center}
 .sl{font-size:11px;color:#6b7280;margin-bottom:3px;font-weight:500}
@@ -179,10 +178,14 @@ hr{border:none;border-top:1px solid #f3f4f6;margin:8px 0}
     <div class="g2">
       <div><label class="fl">幣別</label>
         <select id="cur" onchange="updateFX()">
-          <option value="TWD" selected>台幣 TWD</option><option value="JPY">日圓 JPY</option>
-          <option value="KRW">韓元 KRW</option><option value="CNY">人民幣 CNY</option>
-          <option value="USD">美金 USD</option><option value="THB">泰銖 THB</option>
-          <option value="VND">越南盾 VND</option><option value="EUR">歐元 EUR</option>
+          <option value="TWD" selected>台幣 TWD</option>
+          <option value="JPY">日圓 JPY</option>
+          <option value="KRW">韓元 KRW</option>
+          <option value="CNY">人民幣 CNY</option>
+          <option value="USD">美金 USD</option>
+          <option value="THB">泰銖 THB</option>
+          <option value="VND">越南盾 VND</option>
+          <option value="EUR">歐元 EUR</option>
         </select></div>
       <div><label class="fl">金額</label><input type="number" id="amt" value="1000" inputmode="numeric"/></div>
     </div>
@@ -263,6 +266,16 @@ hr{border:none;border-top:1px solid #f3f4f6;margin:8px 0}
 <script>
 var ADM='cube2026';
 var FX={TWD:1,JPY:.22,KRW:.024,CNY:4.45,USD:32,THB:.9,VND:.000013,EUR:35};
+// 哪些 cat 預設用外幣
+var CAT_CUR={
+  'JPY':['海外-日本'],
+  'KRW':['海外-韓國'],
+  'CNY':['海外-大陸','網購-大陸'],
+  'THB':['海外-泰國'],
+  'VND':['海外-越南'],
+  'USD':['海外-線上','AI訂閱'],
+  'EUR':['海外-歐洲']
+};
 var LV={1:2,2:3,3:3.3};
 var CCAP='可刷限額=當月信用額度+NT$50萬，超出僅0.3%；Mastercard不適用日本賞（JCB限定）';
 var lv=2,bd=false,pm='direct',mode='phy',isAdm=false;
@@ -275,33 +288,20 @@ var acts={
   cube_mcd:{a:true,dl:'2026/06/30'}
 };
 
-// ── 正確連結（富邦使用大寫Personal）──
 var META={
-  1:{site:'https://www.cathaybk.com.tw/cathaybk/personal/product/credit-card/cards/cube/',sn:'CUBE官網',
-     r1:'https://www.cathaybk.com.tw/cathaybk/personal/product/credit-card/cards/cube/',r1n:'CUBE App 切換方案',
-     r2:'https://activity.cathaybk.com.tw/mcd/2026/',r2n:'麥當勞APP手機點餐加碼登錄'},
+  1:{site:'https://www.cathaybk.com.tw/cathaybk/personal/product/credit-card/cards/cube/',sn:'CUBE官網',r1:'https://www.cathaybk.com.tw/cathaybk/personal/product/credit-card/cards/cube/',r1n:'CUBE App 切換方案',r2:'https://activity.cathaybk.com.tw/mcd/2026/',r2n:'麥當勞APP手機點餐加碼登錄'},
   2:{site:'https://www.cathaybk.com.tw/cathaybk/personal/product/credit-card/cards/shopee/',sn:'蝦皮卡官網'},
-  3:{site:'https://richart.tw/TSDIB_RichartWeb/card/credit-card',sn:'Richart官網',
-     r1:'https://richart.tw/TSDIB_RichartWeb/card/credit-card',r1n:'Richart Life App 切換（捷運優惠券）',
-     r2:'https://richart.tw/TSDIB_RichartWeb/card/credit-card',r2n:'機場接送任務牆'},
-  4:{site:'https://www.fubon.com/banking/Personal/credit_card/j_card/',sn:'富邦J卡官網',
-     r1:'https://cardpromote.taipeifubon.com.tw/promotion/Detail?sn=C000307',r1n:'日韓泰加碼3% 登錄（每月20日16:00）',
-     r2:'https://cardpromote.taipeifubon.com.tw/promotion/Detail?sn=C000307',r2n:'日本交通卡加碼7% 登錄（每月18日16:00）'},
-  5:{site:'https://www.fubon.com/banking/Personal/credit_card/momo/',sn:'momo卡官網',
-     r1:'https://www.fubon.com/banking/Personal/credit_card/momo/',r1n:'指定品牌加碼活動登錄'},
+  3:{site:'https://richart.tw/TSDIB_RichartWeb/card/credit-card',sn:'Richart官網',r1:'https://richart.tw/TSDIB_RichartWeb/card/credit-card',r1n:'Richart Life App（切換+捷運券）',r2:'https://richart.tw/TSDIB_RichartWeb/card/credit-card',r2n:'機場接送任務牆'},
+  4:{site:'https://www.fubon.com/banking/Personal/credit_card/j_card/',sn:'富邦J卡官網',r1:'https://cardpromote.taipeifubon.com.tw/promotion/Detail?sn=C000307',r1n:'日韓泰加碼3% 登錄（每月20日16:00）',r2:'https://cardpromote.taipeifubon.com.tw/promotion/Detail?sn=C000307',r2n:'日本交通卡加碼7% 登錄（每月18日16:00）'},
+  5:{site:'https://www.fubon.com/banking/Personal/credit_card/momo/',sn:'momo卡官網',r1:'https://www.fubon.com/banking/Personal/credit_card/momo/',r1n:'指定品牌加碼活動登錄'},
   6:{site:'https://www.fubon.com/banking/Personal/credit_card/open_possible/',sn:'台哥大卡官網'},
-  7:{site:'https://activity.ubot.com.tw/2025H1LaiDianCard/index.htm',sn:'賴點卡活動官網',
-     r1:'https://activity.ubot.com.tw/2025H1LaiDianCard/index.htm',r1n:'完整指定通路與活動說明'},
+  7:{site:'https://activity.ubot.com.tw/2025H1LaiDianCard/index.htm',sn:'賴點卡活動官網',r1:'https://activity.ubot.com.tw/2025H1LaiDianCard/index.htm',r1n:'完整指定通路與活動說明'},
   8:{site:'https://event.linebank.com.tw/marketing/cobrandcards/',sn:'LINE Bank卡官網'},
-  9:{site:'https://event.esunbank.com.tw/credit/ubear/card.html',sn:'U Bear卡官網',
-     r1:'https://event.esunbank.com.tw/credit/ubear/card.html',r1n:'常見網路消費清單'},
+  9:{site:'https://event.esunbank.com.tw/credit/ubear/card.html',sn:'U Bear卡官網',r1:'https://event.esunbank.com.tw/credit/ubear/card.html',r1n:'常見網路消費清單'},
   10:{site:'https://www.esunbank.com.tw/bank/personal/credit-card/',sn:'玉山U卡官網'},
-  11:{site:'https://activity.ubot.com.tw/2026JiHoCard/index.htm',sn:'吉鶴卡官網',
-      r1:'https://activity.ubot.com.tw/2026JiHoCard/index.htm',r1n:'日系名店清單＋日本加碼登錄',
-      r2:'https://www.specialoffers.jcb/zh-tw/services/travel/',r2n:'JCB機場接送2026方案確認'}
+  11:{site:'https://activity.ubot.com.tw/2026JiHoCard/index.htm',sn:'吉鶴卡官網',r1:'https://activity.ubot.com.tw/2026JiHoCard/index.htm',r1n:'日系名店清單+日本加碼登錄',r2:'https://www.specialoffers.jcb/zh-tw/services/travel/',r2n:'JCB機場接送2026方案確認'}
 };
 
-// 旅遊提示（含CUBE趣旅行特定航空/旅行社優惠）
 var TRAVEL_TIPS={
   '海外-日本':[['吉鶴卡 Apple Pay(QUICPay)','最高8%（前月帳單≥NT$3萬）'],['富邦J卡（實體）','3%+加碼3%=6%（季需登錄）'],['Richart玩旅刷','3.3%無上限'],['賴點卡','3%無上限，免登錄']],
   '海外-韓國':[['富邦J卡（實體）','3%+加碼3%=6%（季需登錄）'],['Richart玩旅刷','3.3%無上限'],['賴點卡','3%無上限，免登錄']],
@@ -311,8 +311,7 @@ var TRAVEL_TIPS={
   '海外-歐洲':[['Richart玩旅刷','3.3%無上限'],['賴點卡','3%，免登錄'],['LINE Bank卡','2.5%無上限']],
   '海外-線上':[['LINE Bank卡 Agoda/Klook等','2.5%+加碼3%=5.5%（月上限NT$300加碼）'],['Richart玩旅刷','3.3%無上限'],['CUBE趣旅行','3%（Level 2）無上限']]
 };
-// CUBE趣旅行特定優惠提示（各國都顯示）
-var CUBE_TRAVEL_NOTE='💎 CUBE趣旅行方案特定優惠（需登錄確認）：\n✈️ 指定航空機票（含長榮/華航/國泰/日航/韓亞等）刷卡享加碼\n🏨 指定旅行社（雄獅/易遊網/Klook/KKday/Agoda/Booking.com等）加碼\n📱 線上訂票/訂房均適用趣旅行3%（Level 2），無須個別登錄旅行社\n請至CUBE App確認目前活動旅遊通路清單';
+var CUBE_TRAVEL_NOTE='💎 CUBE趣旅行方案特定優惠（需至CUBE App確認最新活動）：\n✈️ 指定航空機票（長榮/華航/國泰/日航/韓亞等）刷卡享加碼\n🏨 指定旅行社（雄獅/易遊網/Klook/KKday/Agoda/Booking.com等）加碼\n📱 線上訂票/訂房均適用趣旅行3%（Level 2），無須個別登錄旅行社';
 var TRAVEL_PLATFORM={
   '海外-日本':'✈️ 訂票訂房（Klook/KKday/Agoda/Booking.com）：Richart 玩旅刷 3.3%、CUBE 趣旅行 3%\n🏨 富邦J卡刷機票/旅行社單筆≥NT$15,000，JCB機場接送優惠價（每年最多2次）',
   '海外-韓國':'✈️ 富邦J卡刷機票/旅行社單筆≥NT$15,000，JCB機場接送優惠價（每年最多2次）',
@@ -320,43 +319,43 @@ var TRAVEL_PLATFORM={
   '海外-線上':'✈️ Agoda/Klook/KKday/Booking.com/Hotels.com：LINE Bank 2.5%+加碼3%=5.5%（月上限NT$300加碼部分）\n💡 Richart 玩旅刷 3.3%、CUBE 趣旅行 3% 無上限 也適用'
 };
 
-// ── 消費類別 ──
-// 捷運分開：一般刷卡 vs 乘車碼（需手機掃碼）
 var MG=[
   {g:'電商',items:[{l:'蝦皮',cat:'網購',c:'TWD',ol:1},{l:'momo',cat:'網購',c:'TWD',ol:1},{l:'淘寶/天貓',cat:'網購-大陸',c:'CNY',ol:1},{l:'PChome',cat:'網購',c:'TWD',ol:1},{l:'酷澎',cat:'網購',c:'TWD',ol:1}]},
-  {g:'AI/影音訂閱',items:[{l:'ChatGPT',cat:'AI訂閱',c:'TWD',ol:1},{l:'Google AI',cat:'AI訂閱',c:'TWD',ol:1},{l:'Claude Pro',cat:'AI訂閱',c:'USD',ol:1},{l:'Netflix',cat:'影音訂閱',c:'TWD',ol:1},{l:'Disney+',cat:'影音訂閱',c:'TWD',ol:1},{l:'Spotify',cat:'影音訂閱',c:'TWD',ol:1}]},
+  {g:'AI/影音訂閱',items:[{l:'ChatGPT',cat:'AI訂閱',c:'TWD',ol:1},{l:'Google AI',cat:'AI訂閱',c:'TWD',ol:1},{l:'Claude Pro',cat:'AI訂閱',c:'TWD',ol:1},{l:'Netflix',cat:'影音訂閱',c:'TWD',ol:1},{l:'Disney+',cat:'影音訂閱',c:'TWD',ol:1},{l:'Spotify',cat:'影音訂閱',c:'TWD',ol:1}]},
   {g:'保險/稅費',items:[{l:'保險費',cat:'保險',c:'TWD'},{l:'地價稅',cat:'稅費',c:'TWD'},{l:'房屋稅',cat:'稅費',c:'TWD'},{l:'水電費',cat:'稅費',c:'TWD'},{l:'電信費',cat:'電信費',c:'TWD'}]},
   {g:'國外',items:[{l:'🇯🇵日本',cat:'海外-日本',c:'JPY'},{l:'🇰🇷韓國',cat:'海外-韓國',c:'KRW'},{l:'🇨🇳大陸',cat:'海外-大陸',c:'CNY'},{l:'🇹🇭泰國',cat:'海外-泰國',c:'THB'},{l:'🇻🇳越南',cat:'海外-越南',c:'VND'},{l:'🌐國外線上',cat:'海外-線上',c:'USD',ol:1},{l:'🇪🇺歐洲',cat:'海外-歐洲',c:'EUR'}]},
-  // 交通：捷運（乘車碼）、捷運（一般刷卡）、台鐵、高鐵、Uber、Uber Eats
   {g:'交通',items:[
-    {l:'🚇捷運(乘車碼)',cat:'捷運-碼',c:'TWD',note:'需手機掃描QR乘車碼，台新卡有特殊優惠'},
-    {l:'🚇捷運(嗶卡)',cat:'捷運-嗶',c:'TWD',note:'直接感應卡片/手機，含悠遊卡/一卡通/信用卡感應'},
-    {l:'🚄高鐵',cat:'高鐵',c:'TWD'},
-    {l:'🚂台鐵',cat:'台鐵',c:'TWD'},
-    {l:'🚗Uber叫車',cat:'交通',c:'TWD'},
-    {l:'🛵Uber Eats',cat:'外送',c:'TWD',ol:1}
+    {l:'🚇捷運(乘車碼)',cat:'捷運-碼',c:'TWD'},{l:'🚇捷運(嗶卡)',cat:'捷運-嗶',c:'TWD'},
+    {l:'🚄高鐵',cat:'高鐵',c:'TWD'},{l:'🚂台鐵',cat:'台鐵',c:'TWD'},
+    {l:'🚗Uber叫車',cat:'交通',c:'TWD'},{l:'🛵Uber Eats',cat:'外送',c:'TWD',ol:1}
   ]},
   {g:'餐飲/零售',items:[{l:'麥當勞',cat:'速食-mcd',c:'TWD'},{l:'餐廳',cat:'餐廳',c:'TWD'},{l:'超商',cat:'超商',c:'TWD'},{l:'超市',cat:'超市',c:'TWD'},{l:'加油站',cat:'加油',c:'TWD'}]},
   {g:'手搖飲★優惠',items:[{l:'50嵐',cat:'飲-sp',c:'TWD',sp:1},{l:'路易莎',cat:'飲-sp',c:'TWD',sp:1},{l:'星巴克',cat:'飲-sp',c:'TWD',sp:1},{l:'其他手搖',cat:'飲',c:'TWD'}]},
   {g:'日系通路',items:[{l:'UNIQLO/GU',cat:'日系',c:'TWD'},{l:'大創DAISO',cat:'日系',c:'TWD'},{l:'百貨公司',cat:'百貨',c:'TWD'},{l:'藥妝',cat:'藥妝',c:'TWD'}]}
 ];
 
+// ── 台新 Richart 卡方案設計 ──
+// Pay著刷需綁定台新Pay → 標注此限制
+// 直接刷卡（不是台新Pay/LINE Pay/街口）時：
+//   若沒有綁定台新Pay，則不適用Pay著刷3.8%，退而求其次用其他方案
+// 本系統假設：選「直接刷卡」時，不保證有台新Pay → 顯示說明
+//             選「LINE Pay」時：2.3%（Pay著刷）
+//             選「街口」時：2%（假日刷）
 var CARDS=[
-  {id:1,bank:'國泰世華',name:'CUBE卡（Mastercard）',sw:1,cube:1,
-   swRef:'https://www.cathaybk.com.tw/cathaybk/personal/product/credit-card/cards/cube/',
-   ap:'y',lp:'y',jk:'y',air:'2025年起取消免費機場接送，改為小樹點兌換折扣券',b:[]},
-
+  {id:1,bank:'國泰世華',name:'CUBE卡（Mastercard）',sw:1,cube:1,swRef:'https://www.cathaybk.com.tw/cathaybk/personal/product/credit-card/cards/cube/',ap:'y',lp:'y',jk:'y',air:'2025年起取消免費機場接送，改為小樹點兌換折扣券',b:[]},
   {id:2,bank:'國泰世華',name:'蝦皮聯名卡',sw:0,ap:'y',lp:'n',jk:'n',air:'無',b:[
     {c:['網購'],p:2,cap:null,ms:3000,dl:'~2026/06/30',noReg:1},
     {c:['網購'],p:1,cap:null,ms:0,dl:'常態',noReg:1},
     {c:['海外-日本','海外-韓國','海外-大陸','海外-越南','海外-泰國','海外-線上','海外-歐洲'],p:.5,cap:null,ms:0,dl:'常態',noReg:1},
     {c:['其他','超商','餐廳','速食-mcd','超市','交通','高鐵','台鐵','捷運-嗶','捷運-碼','保險','稅費','日系','百貨','藥妝','飲','飲-sp','外送'],p:.5,cap:null,ms:0,dl:'常態',noReg:1}
   ]},
-
-  {id:3,bank:'台新銀行',name:'Richart卡',sw:1,
-   swRef:'https://richart.tw/TSDIB_RichartWeb/card/credit-card',ap:'y',lp:'p',jk:'p',
-   air:'當月累計NT$20,000享機場接或送最多2次（Richart Life App任務牆，每月限量2,000組）',b:[
-    {c:['超商','超市','餐廳','速食-mcd','交通','高鐵','台鐵','捷運-嗶','百貨','藥妝','加油','飲-sp','飲'],p:3.8,cap:null,ms:0,sp:'Pay著刷',dl:'~2026/06/30',noReg:1},
+  // Richart：Pay著刷需綁定台新Pay！
+  {id:3,bank:'台新銀行',name:'Richart卡',sw:1,swRef:'https://richart.tw/TSDIB_RichartWeb/card/credit-card',ap:'y',lp:'p',jk:'p',
+   air:'當月累計NT$20,000享機場接或送最多2次（Richart Life App任務牆，每月限量2,000組）',
+   richartNote:'⚠️ Pay著刷（3.8%）需綁定「台新Pay」才適用；若未綁定台新Pay，建議用天天刷/好饗刷等其他方案',
+   b:[
+    // Pay著刷 3.8%：需綁定台新Pay，以「taiwan pay required」標注
+    {c:['超商','超市','餐廳','速食-mcd','交通','高鐵','台鐵','捷運-嗶','百貨','藥妝','加油','飲-sp','飲'],p:3.8,cap:null,ms:0,sp:'Pay著刷',dl:'~2026/06/30',noReg:1,needTP:1},
     {c:['超商','超市','交通','高鐵','台鐵','捷運-嗶','加油','藥妝'],p:3.3,cap:null,ms:0,sp:'天天刷',dl:'~2026/06/30',noReg:1},
     {c:['百貨','日系'],p:3.3,cap:null,ms:0,sp:'大筆刷',dl:'~2026/06/30',noReg:1},
     {c:['餐廳','速食-mcd','外送','飲-sp','飲'],p:3.3,cap:null,ms:0,sp:'好饗刷',dl:'~2026/06/30',noReg:1},
@@ -364,34 +363,26 @@ var CARDS=[
     {c:['海外-日本','海外-韓國','海外-大陸','海外-越南','海外-泰國','海外-線上','海外-歐洲','交通','高鐵','台鐵'],p:3.3,cap:null,ms:0,sp:'玩旅刷',dl:'~2026/06/30',noReg:1},
     {c:['保險'],p:1.3,cap:null,ms:0,dl:'~2026/06/30',noReg:1},
     {c:['稅費','電信費','捷運-碼','其他'],p:.3,cap:null,ms:0,dl:'常態',noReg:1}
-    // 台新卡乘車碼特殊：在 calcCard 中用捷運-碼特殊處理
   ]},
-
   {id:4,bank:'台北富邦',name:'富邦J卡',sw:0,ap:'y',lp:'y',jk:'y',
    air:'JCB晶緻卡：刷機票/旅行社單筆NT$15,000以上，JCB機場接送優惠價，每年最多2次',
    ins:'保費 0.5% 回饋（無上限）或最高12期0利率分期付款（二選一，需登錄申請）',
    b:[
     {c:['海外-日本','海外-韓國','海外-泰國'],p:3,cap:null,ms:0,dl:'~2026/09/30',base:1,noReg:1},
-    {c:['海外-日本','海外-韓國','海外-泰國'],p:3,cap:1000,ms:1000,dl:'~2026/09/30',boost:1,ak:'jb',phy:1,
-     reg:'每月20日16:00，限量20,000名/月，每季登錄一次即符合當季',ru:'https://cardpromote.taipeifubon.com.tw/promotion/Detail?sn=C000307',
-     nomp:1,nompNote:'⚠️ 加碼3%限實體消費，排除第三方支付'},
-    {c:['海外-日本'],p:7,cap:200,ms:2000,dl:'~2026/09/30',boost:1,ak:'js',
-     reg:'每月18日16:00，限量10,000名/月，每季登錄一次',ru:'https://cardpromote.taipeifubon.com.tw/promotion/Detail?sn=C000307'},
+    {c:['海外-日本','海外-韓國','海外-泰國'],p:3,cap:1000,ms:1000,dl:'~2026/09/30',boost:1,ak:'jb',phy:1,reg:'每月20日16:00，限量20,000名/月，每季登錄一次即符合當季',ru:'https://cardpromote.taipeifubon.com.tw/promotion/Detail?sn=C000307',nomp:1,nompNote:'⚠️ 加碼3%限實體消費，排除第三方支付'},
+    {c:['海外-日本'],p:7,cap:200,ms:2000,dl:'~2026/09/30',boost:1,ak:'js',reg:'每月18日16:00，限量10,000名/月，每季登錄一次',ru:'https://cardpromote.taipeifubon.com.tw/promotion/Detail?sn=C000307'},
     {c:['海外-大陸','海外-越南','海外-線上','海外-歐洲','網購-大陸'],p:1.5,cap:null,ms:0,dl:'常態',noReg:1},
-    {c:['捷運-嗶','捷運-碼'],p:2,cap:null,ms:0,dl:'常態',noReg:1},  // 一卡通2%（需一卡通聯名功能）
+    {c:['捷運-嗶','捷運-碼'],p:2,cap:null,ms:0,dl:'常態',noReg:1},
     {c:['高鐵','台鐵','交通'],p:1,cap:null,ms:0,dl:'常態',noReg:1},
-    {c:['保險'],p:.5,cap:null,ms:0,dl:'常態',noReg:1},  // 或12期0利率二選一
+    {c:['保險'],p:.5,cap:null,ms:0,dl:'常態',noReg:1},
     {c:['餐廳','速食-mcd','超商','網購','超市','AI訂閱','影音訂閱','百貨','日系','飲','飲-sp'],p:1,cap:null,ms:0,dl:'常態',noReg:1},
     {c:['稅費','電信費','加油','藥妝','其他'],p:.5,cap:null,ms:0,dl:'常態',noReg:1}
   ]},
-
   {id:5,bank:'台北富邦',name:'momo聯名卡',sw:0,ap:'y',lp:'n',jk:'n',air:'無',b:[
     {c:['網購'],p:3,cap:null,ms:0,dl:'~2026/12/31',ool:1,noReg:1},
-    {c:['海外-日本','海外-韓國','海外-大陸','海外-越南','海外-泰國','海外-線上','海外-歐洲','網購-大陸'],p:5,cap:600,ms:0,dl:'~2026/06/30',boost:1,
-     reg:'各活動分別登錄（每月定期開放）',ru:'https://www.fubon.com/banking/Personal/credit_card/momo/'},
+    {c:['海外-日本','海外-韓國','海外-大陸','海外-越南','海外-泰國','海外-線上','海外-歐洲','網購-大陸'],p:5,cap:600,ms:0,dl:'~2026/06/30',boost:1,reg:'各活動分別登錄（每月定期開放）',ru:'https://www.fubon.com/banking/Personal/credit_card/momo/'},
     {c:['其他','超商','超市','餐廳','速食-mcd','交通','高鐵','台鐵','捷運-嗶','捷運-碼','保險','稅費','電信費','AI訂閱','影音訂閱','日系','飲','飲-sp'],p:1,cap:null,ms:0,dl:'常態',noReg:1}
   ]},
-
   {id:6,bank:'台北富邦',name:'台哥大Open Possible卡',sw:0,ap:'y',lp:'y',jk:'n',air:'無',b:[
     {c:['電信費'],p:3.5,cap:500,ms:5000,dl:'~2026/07/31',noReg:1},
     {c:['影音訂閱','超商','AI訂閱'],p:2,cap:600,ms:5000,dl:'~2026/07/31',noReg:1},
@@ -399,19 +390,13 @@ var CARDS=[
     {c:['海外-大陸','海外-線上','網購-大陸'],p:2,cap:600,ms:5000,dl:'~2026/07/31',noReg:1},
     {c:['其他','網購','餐廳','速食-mcd','捷運-嗶','捷運-碼','保險','稅費','百貨','日系','飲','飲-sp'],p:1,cap:null,ms:0,dl:'常態',noReg:1}
   ]},
-
-  {id:7,bank:'聯邦銀行',name:'賴點卡',sw:0,ap:'y',lp:'y',jk:'n',
-   air:'持賴點卡享自費機場接送優惠價',b:[
+  {id:7,bank:'聯邦銀行',name:'賴點卡',sw:0,ap:'y',lp:'y',jk:'n',air:'持賴點卡享自費機場接送優惠價',b:[
     {c:['海外-日本','海外-韓國','海外-大陸','海外-越南','海外-泰國','海外-線上','海外-歐洲'],p:3,cap:null,ms:0,dl:'~2026/06/30',noReg:1},
     {c:['超商'],p:5,cap:null,ms:0,dl:'~2026/06/30',noReg:1},
-    {c:['飲-sp','速食-mcd','藥妝','餐廳'],p:7,cap:150,ms:100,dl:'~2026/06/30',boost:1,
-     reg:'需綁定LINE Pay+電子帳單，偶數日自動適用（⚠️ 僅限LINE Pay，排除其他第三方支付）',
-     ru:'https://activity.ubot.com.tw/2025H1LaiDianCard/index.htm',
-     nomp:1,nompNote:'⚠️ 僅限LINE Pay付款，排除街口/全支付等'},
+    {c:['飲-sp','速食-mcd','藥妝','餐廳'],p:7,cap:150,ms:100,dl:'~2026/06/30',boost:1,reg:'需綁定LINE Pay+電子帳單，偶數日自動適用（⚠️ 僅限LINE Pay，排除其他第三方支付）',ru:'https://activity.ubot.com.tw/2025H1LaiDianCard/index.htm',nomp:1,nompNote:'⚠️ 僅限LINE Pay付款，排除街口/全支付等'},
     {c:['其他','交通','高鐵','台鐵','捷運-嗶','捷運-碼','超市','保險','稅費','電信費','AI訂閱','影音訂閱','百貨','日系'],p:1,cap:null,ms:0,dl:'常態',noReg:1},
     {c:['飲'],p:1,cap:null,ms:0,dl:'常態',noReg:1}
   ]},
-
   {id:8,bank:'聯邦銀行',name:'LINE Bank聯名卡',sw:0,ap:'y',lp:'y',jk:'n',air:'無',lb:1,b:[
     {c:['網購'],p:4,cap:300,ms:0,dl:'~2026/07/31',noReg:1,nomp:1,nompNote:'⚠️ 建議直接輸入卡號；透過LINE Pay等行動支付可能無法認列加碼3%'},
     {c:['影音訂閱','AI訂閱'],p:4,cap:300,ms:0,dl:'~2026/07/31',noReg:1,nomp:1,nompNote:'⚠️ 建議直接在官網綁卡扣款；透過Google Play/PayPal代扣不適用加碼3%'},
@@ -419,30 +404,24 @@ var CARDS=[
     {c:['海外-日本','海外-韓國','海外-大陸','海外-越南','海外-泰國','海外-線上','海外-歐洲'],p:2.5,cap:null,ms:0,dl:'~2026/07/31',noReg:1},
     {c:['其他','超商','超市','餐廳','速食-mcd','交通','高鐵','台鐵','捷運-嗶','捷運-碼','保險','稅費','電信費','日系','飲','飲-sp'],p:1,cap:null,ms:0,dl:'常態',noReg:1}
   ]},
-
   {id:9,bank:'玉山銀行',name:'U Bear卡',sw:0,ap:'n',lp:'y',jk:'y',air:'無',ubear:1,b:[
     {c:['AI訂閱','影音訂閱'],p:10,cap:100,ms:0,dl:'~2026/08/31',ool:1,noReg:1,nomp:1,nompNote:'⚠️ 需直接在官網綁卡扣款；透過Google Play/PayPal/Apple代扣不適用'},
     {c:['網購','網購-大陸','外送','交通','高鐵','台鐵'],p:3,cap:150,ms:0,dl:'~2026/08/31',ool:1,noReg:1,capNote:'逐筆無條件捨去，需綁定帳單e化'},
     {c:['其他','超商','超市','餐廳','速食-mcd','保險','稅費','電信費','百貨','藥妝','日系','飲','飲-sp','交通','外送','網購','網購-大陸','捷運-嗶','捷運-碼','高鐵','台鐵'],p:1,cap:null,ms:0,dl:'常態',noReg:1},
     {c:['海外-日本','海外-韓國','海外-大陸','海外-越南','海外-泰國','海外-線上','海外-歐洲'],p:1,cap:null,ms:0,dl:'常態',noReg:1}
   ]},
-
   {id:10,bank:'玉山銀行',name:'U卡',sw:0,ap:'y',lp:'y',jk:'y',air:'無',b:[
     {c:['網購','網購-大陸','外送'],p:3,cap:300,ms:0,dl:'~2026/06/30',noReg:1},
     {c:['海外-日本','海外-韓國','海外-大陸','海外-越南','海外-泰國','海外-線上','海外-歐洲'],p:2,cap:null,ms:0,dl:'~2026/06/30',noReg:1},
     {c:['其他','超商','超市','餐廳','速食-mcd','交通','高鐵','台鐵','捷運-嗶','捷運-碼','保險','稅費','電信費','AI訂閱','影音訂閱','百貨','日系','飲','飲-sp'],p:1,cap:null,ms:0,dl:'常態',noReg:1}
   ]},
-
   {id:11,bank:'聯邦銀行',name:'吉鶴卡（JCB）',sw:0,ap:'y',lp:'n',jk:'n',
    air:'⛔ 聯邦自辦機場接送已於2024/12/31截止\n🏨 機場貴賓室：每年2次免費（日本/泰國/新加坡/韓國，LoungeKey）\n📋 JCB組織2026年接送方案：請至官網確認',
    b:[
     {c:['海外-日本'],p:2.5,cap:null,ms:0,dl:'~2026/06/30',base:1,noReg:1},
-    {c:['海外-日本'],p:1.5,cap:600,ms:0,dl:'~2026/06/30',boost:1,ak:'ja',
-     reg:'活動期間登錄1次（前月帳單≥NT$30,000享額外+1%加碼）',ru:'https://activity.ubot.com.tw/2026JiHoCard/index.htm'},
-    {c:['海外-日本'],p:3,cap:600,ms:0,dl:'~2026/06/30',boost:1,ak:'jst',
-     reg:'活動期間登錄1次（7-11/LAWSON/東迪/環球/三越/BicCamera等）',ru:'https://activity.ubot.com.tw/2026JiHoCard/index.htm'},
-    {c:['日系'],p:4,cap:500,ms:0,dl:'~2026/06/30',boost:1,noReg:1,
-     nomp:1,nompNote:'⚠️ 限實體卡片及感應式交易，排除行動支付在線上消費'},
+    {c:['海外-日本'],p:1.5,cap:600,ms:0,dl:'~2026/06/30',boost:1,ak:'ja',reg:'活動期間登錄1次（前月帳單≥NT$30,000享額外+1%加碼）',ru:'https://activity.ubot.com.tw/2026JiHoCard/index.htm'},
+    {c:['海外-日本'],p:3,cap:600,ms:0,dl:'~2026/06/30',boost:1,ak:'jst',reg:'活動期間登錄1次（7-11/LAWSON/東迪/環球/三越/BicCamera等）',ru:'https://activity.ubot.com.tw/2026JiHoCard/index.htm'},
+    {c:['日系'],p:4,cap:500,ms:0,dl:'~2026/06/30',boost:1,noReg:1,nomp:1,nompNote:'⚠️ 限實體卡片及感應式交易，排除行動支付在線上消費'},
     {c:['海外-韓國','海外-泰國','海外-大陸','海外-越南','海外-線上','海外-歐洲'],p:1,cap:null,ms:0,dl:'常態',noReg:1},
     {c:['餐廳','速食-mcd','超商','超市','交通','高鐵','台鐵','捷運-嗶','捷運-碼','百貨','藥妝','網購','AI訂閱','影音訂閱','保險','稅費','電信費','飲','飲-sp','其他'],p:1.3,cap:null,ms:0,dl:'~2026/06/30',noReg:1}
   ]}
@@ -489,10 +468,7 @@ function setMode(m){
   mode=m;
   document.getElementById('m-phy').className='togb'+(m==='phy'?' phy':'');
   document.getElementById('m-onl').className='togb'+(m==='onl'?' onl':'');
-  var n={
-    phy:'🏪 <strong>實體刷卡</strong>：現場感應/插卡/Apple Pay感應。玉山UBear卡實體直刷僅享1%基本回饋。',
-    onl:'🌐 <strong>線上刷卡</strong>：App付款、網站下單、行動支付在網路通路。玉山UBear線上最高3%（月上限NT$150）；AI/影音訂閱最高10%（不需登錄，月上限NT$100）。⚠️ 超商/保費不算線上消費'
-  };
+  var n={phy:'🏪 <strong>實體刷卡</strong>：現場感應/插卡/Apple Pay感應。玉山UBear卡實體直刷僅享1%基本回饋。',onl:'🌐 <strong>線上刷卡</strong>：App付款、網站下單、行動支付在網路通路。玉山UBear線上最高3%（月上限NT$150）；AI/影音訂閱最高10%（不需登錄，月上限NT$100）。⚠️ 超商/保費不算線上消費'};
   document.getElementById('mnote').innerHTML=n[m];
 }
 function setLv(l){
@@ -505,7 +481,7 @@ function setPay(m){
   pm=m;['direct','applepay','linepay','jkopay'].forEach(function(x){document.getElementById('p-'+x).classList.toggle('on',x===m);});
   var n={
     applepay:'<div class="info ib mtn" style="font-size:14px">Apple Pay：<strong>實體感應算實體刷卡</strong>，玉山UBear Apple Pay實體消費不計入線上3%（僅1%）。吉鶴卡在日本 Apple Pay(QUICPay)加碼！捷運嗶卡也適用。</div>',
-    linepay:'<div class="info ig mtn" style="font-size:14px">LINE Pay：<strong>在網路/App消費算線上</strong>。Richart Pay著刷2.3%。賴點卡偶數日指定通路最高7%（限LINE Pay）。<strong>⚠️ LINE Bank卡加碼3%建議直接輸入卡號，不透過LINE Pay</strong>。吉鶴卡不支援。</div>',
+    linepay:'<div class="info ig mtn" style="font-size:14px">LINE Pay：<strong>在網路/App消費算線上</strong>。Richart Line Pay走「Pay著刷」方案享2.3%（需已綁定台新Pay）。賴點卡偶數日指定通路最高7%（限LINE Pay）。<strong>⚠️ LINE Bank卡加碼3%建議直接輸入卡號，不透過LINE Pay</strong>。吉鶴卡不支援。</div>',
     jkopay:'<div class="info ia mtn" style="font-size:14px">街口支付：<strong>在App消費算線上</strong>。玉山UBear卡街口算線上3%。Richart僅假日刷支援。賴點卡/momo/吉鶴卡不支援。</div>'
   };
   document.getElementById('paynote').innerHTML=n[m]||'';
@@ -531,11 +507,20 @@ function selM(m){
   // 自動切換刷卡模式
   if(m.ol){setMode('onl');}
   else if(['交通','速食-mcd','超商','超市','餐廳','加油','飲-sp','飲','日系','百貨','藥妝','捷運-嗶','捷運-碼','高鐵','台鐵'].indexOf(m.cat)>=0){setMode('phy');}
-  if(m.c&&m.c!=='TWD'){document.getElementById('cur').value=m.c;updateFX();}
-  else{document.getElementById('cur').value='TWD';document.getElementById('fxnote').textContent='';}
+  // ── 幣別設定：預設台幣，只有國外類別才切換 ──
+  // 每次點晶片都先reset到台幣，再看有沒有指定外幣
+  document.getElementById('cur').value='TWD';
+  document.getElementById('fxnote').textContent='';
+  if(m.c&&m.c!=='TWD'){
+    document.getElementById('cur').value=m.c;
+    updateFX();
+  }
 }
 function onMinput(v){selMD={l:v,cat:'其他',c:'TWD'};document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});}
-function updateFX(){var c=document.getElementById('cur').value,e=document.getElementById('fxnote');e.textContent=c==='TWD'?'':'參考匯率：1 '+c+' ≈ NT$'+FX[c]+'（請以實際匯率為準）';}
+function updateFX(){
+  var c=document.getElementById('cur').value,e=document.getElementById('fxnote');
+  e.textContent=c==='TWD'?'':'參考匯率：1 '+c+' ≈ NT$'+FX[c]+'（請以實際匯率為準）';
+}
 
 function renderCardList(){
   document.getElementById('cardlist').innerHTML=CARDS.map(function(c){
@@ -582,27 +567,15 @@ function calc(){
     +'</div>';
   html+='<div style="font-size:14px;color:#6b7280;margin-bottom:10px;font-weight:500">'+m.l+' · '+(onl?'🌐 線上':'🏪 實體')+'</div>';
 
-  // 捷運乘車碼說明
-  if(cat==='捷運-碼'){
-    html+='<div class="info ib mtn" style="margin-bottom:10px;font-size:14px">🚇 <strong>捷運QR乘車碼</strong>：需在電子支付App開啟「乘車碼」掃描進站，與直接嗶卡不同。<br>台新卡（Richart/GoGo/FlyGo）綁台新Pay乘車碼，舊戶可在Richart Life App領券享5次免費搭乘（限量，~2026/06/30）<br>⚠️ 直接感應信用卡嗶卡預計2026年7月全面開放</div>';
-  }
-  if(cat==='捷運-嗶'){
-    html+='<div class="info ib mtn" style="margin-bottom:10px;font-size:14px">🚇 <strong>捷運嗶卡（悠遊卡/一卡通/信用卡感應）</strong>：直接感應，回饋計入信用卡一般交通消費。<br>富邦J卡有一卡通功能可享2%，台新Richart卡Pay著刷3.8%或天天刷3.3%</div>';
-  }
+  // 捷運提示
+  if(cat==='捷運-碼'){html+='<div class="info ib mtn" style="margin-bottom:10px;font-size:14px">🚇 <strong>捷運QR乘車碼</strong>：需在電子支付App開啟「乘車碼」掃描進站（不是直接感應卡片）。<br>台新Richart卡：Pay著刷3.8%（需綁台新Pay），舊戶可在Richart Life App領取5次免費搭乘券（~2026/06/30，限量12,000名）<br>⚠️ 直接感應信用卡嗶卡預計2026年7月全面開放</div>';}
+  if(cat==='捷運-嗶'){html+='<div class="info ib mtn" style="margin-bottom:10px;font-size:14px">🚇 <strong>捷運嗶卡（悠遊卡/一卡通/信用卡感應）</strong>：直接感應進站。<br>CUBE集精選2%、富邦J卡一卡通2%（無上限）、Richart Pay著刷3.8%（需綁台新Pay）/天天刷3.3%</div>';}
 
-  // 保險說明
-  if(cat==='保險'){
-    html+='<div class="ins-tip mtn" style="margin-bottom:10px"><div style="font-size:15px;font-weight:700;color:#15803d;margin-bottom:6px">💼 保費刷卡注意事項</div>'
-      +'<div style="font-size:14px;color:#374151;line-height:1.7">'
-      +'富邦J卡：保費0.5%回饋 <strong>或</strong> 最高12期0利率分期（二選一，需登錄申請）<br>'
-      +'台新Richart卡：保費1.3%（免切換免登錄，是保費最高回饋之一）<br>'
-      +'⚠️ 大額保費（年繳）建議比較：12期0利率相當於1/12的資金成本優惠，vs 直接回饋</div></div>';
-  }
+  // 保險提示
+  if(cat==='保險'){html+='<div class="ins-tip mtn" style="margin-bottom:10px"><div style="font-size:15px;font-weight:700;color:#15803d;margin-bottom:6px">💼 保費刷卡注意事項</div><div style="font-size:14px;color:#374151;line-height:1.7">富邦J卡：保費0.5%回饋 <strong>或</strong> 最高12期0利率分期（<strong>二選一</strong>，需登錄申請）<br>台新Richart卡：保費1.3%（免切換免登錄，是保費最高回饋之一）<br>⚠️ 大額年繳保費建議比較：12期0利率 vs 0.5%直接回饋哪個划算</div></div>';}
 
-  // 麥當勞說明
-  if(cat==='速食-mcd'){
-    html+='<div class="info ipur mtn" style="margin-bottom:10px;font-size:14px">🍟 <strong>CUBE卡麥當勞APP手機點餐最高12%</strong>：切換樂饗購後，在CUBE App領取7.5%優惠券（活動二 4/15~6/9，上限80點），再加活動一1.2%（上限50點）<br><span class="no-mp-tag">🚫 不適用行動支付</span> 排除LINE Pay、街口、全支付及外送平台</div>';
-  }
+  // 麥當勞提示
+  if(cat==='速食-mcd'){html+='<div class="info ipur mtn" style="margin-bottom:10px;font-size:14px">🍟 <strong>CUBE卡麥當勞APP手機點餐最高12%</strong>：切換樂饗購後，在CUBE App領取7.5%優惠券（活動二 4/15~6/9，上限80點），再加活動一1.2%（上限50點）<br><span class="no-mp-tag">🚫 不適用行動支付</span> 排除LINE Pay、街口、全支付及外送平台</div>';}
 
   // 旅遊提示
   var tips=TRAVEL_TIPS[cat];
@@ -611,7 +584,6 @@ function calc(){
     tips.forEach(function(row){html+='<div class="trow"><div style="flex:1;color:#374151;font-weight:600">'+row[0]+'</div><div style="color:#7e22ce;font-weight:700;font-size:15px;margin-left:10px;flex-shrink:0">'+row[1]+'</div></div>';});
     var plat=TRAVEL_PLATFORM[cat];
     if(plat)html+='<div style="font-size:13px;color:#6b7280;margin-top:8px;white-space:pre-line;line-height:1.6">'+plat+'</div>';
-    // CUBE趣旅行特定優惠（所有國外類別）
     if(selC.has(1))html+='<div style="font-size:13px;color:#7e22ce;margin-top:8px;border-top:1px solid rgba(167,139,250,.3);padding-top:7px;white-space:pre-line;line-height:1.6">'+CUBE_TRAVEL_NOTE+'</div>';
     html+='</div>';
   }
@@ -622,6 +594,11 @@ function calc(){
 
   // UBear線上提醒
   if(onl&&selC.has(9))html+='<div class="info ig mtn" style="margin-bottom:10px;font-size:14px">🐻 <strong>玉山U Bear線上優惠（不需登錄）</strong>：線上刷卡最高3%（月上限NT$150）；AI/影音訂閱最高10%（月上限NT$100）。⚠️ 超商/保費不算線上消費</div>';
+
+  // Richart Pay著刷說明（若沒有選台新Pay，提醒需綁定）
+  if(selC.has(3)&&pm==='direct'){
+    html+='<div class="info ia mtn" style="margin-bottom:10px;font-size:14px">⚠️ <strong>Richart卡 Pay著刷（3.8%）需綁定台新Pay</strong>才適用。若尚未綁定台新Pay，實際回饋將以次佳方案（天天刷3.3%等）計算。</div>';
+  }
 
   var swC=rs.filter(function(r){return r.card.sw&&r.swN;});
   if(swC.length){
@@ -638,7 +615,6 @@ function calc(){
     if(c.air&&c.air!=='無'&&!c.air.startsWith('⛔'))pt+='<span style="background:#f3e8ff;color:#7e22ce;font-size:12px;padding:4px 11px;border-radius:99px;font-weight:600">✈ 機場</span>';
     if(c.id===11)pt+='<span style="background:#dcfce7;color:#15803d;font-size:12px;padding:4px 11px;border-radius:99px;font-weight:600">🏨 貴賓室</span>';
     pt+='</div>';
-
     html+='<div class="rc '+(i===0?'best':'')+'">';
     html+='<div class="rh"><div style="display:flex;align-items:center;gap:10px"><div class="rk '+rkc+'">'+rkl+'</div><div><div style="font-size:15px;font-weight:700">'+c.name+lvB+'</div><div style="font-size:13px;color:#6b7280;margin-top:1px">'+c.bank+(c.sw?' · 每日切換':'')+'</div></div></div><div style="text-align:right"><div style="font-size:21px;font-weight:800;color:'+(r.tot>0?'#059669':'#9ca3af')+'">NT$'+r.tot.toFixed(0)+'</div><div style="font-size:13px;color:#9ca3af">'+pct+'% 回饋</div></div></div>';
     html+='<div class="rb">';
@@ -649,7 +625,9 @@ function calc(){
         var dlt=(it.dl&&it.dl!=='常態')?'<span class="dltag">'+it.dl+'</span>':'';
         var rg=(!it.noReg&&it.reg)?'<a href="'+(it.ru||'#')+'" target="_blank" class="regtag">需登錄 →</a>':'';
         var nmp=it.nomp?'<span class="no-mp-tag">🚫 不適用行動支付</span>':'';
-        html+='<div class="brow act"><span class="bl">'+bb+it.lbl+dlt+rg+nmp+'</span><span class="bv">NT$'+it.val.toFixed(0)+'</span></div>';
+        // Pay著刷標注
+        var tpNote=it.needTP?'<span style="display:inline-block;font-size:11px;padding:2px 6px;border-radius:99px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-weight:600;margin-left:5px;vertical-align:middle">需綁台新Pay</span>':'';
+        html+='<div class="brow act"><span class="bl">'+bb+it.lbl+dlt+rg+nmp+tpNote+'</span><span class="bv">NT$'+it.val.toFixed(0)+'</span></div>';
         html+='<div class="caprow">'+capH(it.cap,it.pct);
         if(!it.noReg&&it.reg)html+='<span style="font-size:13px;color:#059669">'+it.reg+'</span>';
         if(it.nomp&&it.nompNote)html+='<span style="font-size:13px;color:#dc2626">'+it.nompNote+'</span>';
@@ -667,7 +645,6 @@ function calc(){
     if(r.cf)html+='<div class="info ia mtn" style="font-size:14px">'+r.cf+'</div>';
     if(c.cube)html+='<div class="info igr mtn" style="font-size:13px">'+CCAP+'</div>';
     if(c.air&&c.air!=='無')html+='<div class="info igr mtn" style="font-size:13px;white-space:pre-line">'+c.air+'</div>';
-    // 富邦J卡保費分期說明
     if(c.ins&&cat==='保險')html+='<div class="info ig mtn" style="font-size:13px">💼 '+c.ins+'</div>';
     html+=linkRow(c.id);
     html+='</div></div>';
@@ -679,24 +656,25 @@ function calc(){
 function calcCard(c,cat,amt,onl){
   var acts2=[],inas=[],tot=0,swN=false,swPlan='',wn='',cf='',sw='';
   var isOS=cat.indexOf('海外')===0;
+
   if(pm==='linepay'&&c.lp==='n')cf=c.name+' 不支援 LINE Pay';
   if(pm==='jkopay'&&c.jk==='n')cf=c.name+' 不支援街口支付';
   if(pm==='applepay'&&c.ap==='n')cf=c.name+' 不支援 Apple Pay';
   if(c.id===9&&pm==='applepay'&&!onl)wn='玉山UBear卡Apple Pay實體感應不計入線上3%，僅享1%';
   if(c.id===5&&pm==='linepay'&&cat==='網購')wn='momo聯名卡在momo站內使用LINE Pay只有1%（非3%）';
 
-  // Richart特殊
-  if(c.id===3&&pm==='linepay'){var v=amt*.023;return{tot:v,acts:[{lbl:'LINE Pay (Pay著刷 2.3%)',val:v,cap:null,pct:2.3,dl:'~2026/06/30',noReg:1}],inas:[],swN:true,swPlan:'Pay著刷',wn:wn,cf:cf,sw:'LINE Pay在Richart卡僅Pay著刷(2.3%)或假日刷(2%)'};}
+  // ── Richart 特殊邏輯 ──
+  // LINE Pay → Pay著刷 2.3%
+  if(c.id===3&&pm==='linepay'){var v=amt*.023;return{tot:v,acts:[{lbl:'LINE Pay (Pay著刷 2.3%)',val:v,cap:null,pct:2.3,dl:'~2026/06/30',noReg:1}],inas:[],swN:true,swPlan:'Pay著刷',wn:wn,cf:cf,sw:'LINE Pay在Richart卡走Pay著刷(2.3%)，需已綁定台新Pay'};} 
+  // 街口 → 假日刷 2%
   if(c.id===3&&pm==='jkopay'){var v=amt*.02;return{tot:v,acts:[{lbl:'街口 (假日刷 2%，需假日)',val:v,cap:null,pct:2,dl:'~2026/06/30',noReg:1}],inas:[],swN:true,swPlan:'假日刷',wn:wn,cf:cf,sw:'街口僅Richart卡假日刷(2%)適用'};}
-  // Richart捷運乘車碼特殊優惠
+  // 捷運乘車碼 Pay著刷特殊
   if(c.id===3&&cat==='捷運-碼'){
-    var v=amt*.038;// Pay著刷 3.8%
-    return{tot:v,acts:[{lbl:'Pay著刷 3.8%（台新Pay乘車碼掃碼進站）',val:v,cap:null,pct:3.8,dl:'~2026/06/30',noReg:1}],
-      inas:[],swN:true,swPlan:'Pay著刷',wn:wn,cf:cf,
-      sw:'🚇 Richart舊戶可在Richart Life App領取5次免費搭乘捷運券（~2026/06/30，限量12,000名）！'};
+    var v=amt*.038;
+    return{tot:v,acts:[{lbl:'Pay著刷 3.8%（台新Pay乘車碼掃碼進站）',val:v,cap:null,pct:3.8,dl:'~2026/06/30',noReg:1,needTP:1}],inas:[],swN:true,swPlan:'Pay著刷',wn:wn,cf:cf,sw:'🚇 Richart舊戶可在Richart Life App領取5次免費搭乘捷運券（~2026/06/30，限量12,000名）！需先綁定台新Pay後掃碼進站'};
   }
 
-  // 吉鶴卡日本AP
+  // 吉鶴卡日本 Apple Pay
   if(c.id===11&&pm==='applepay'&&cat==='海外-日本'){
     var base=amt*.025;acts2.push({lbl:'日本消費基本 2.5%（無上限）',val:base,cap:null,pct:2.5,dl:'~2026/06/30',base:1,noReg:1});tot=base;
     var a1=getAct('ja'),a2=getAct('jst');
@@ -731,15 +709,11 @@ function calcCard(c,cat,amt,onl){
       }
       return{tot:tot,acts:acts2,inas:[],swN:true,swPlan:'樂饗購',wn:wn,cf:cf,sw:'切換至【樂饗購】方案；在CUBE App領取麥當勞7.5%優惠券（活動二 4/15~6/9）'};
     }
+    // 集精選含捷運
     var PM={'玩數位':['網購','網購-大陸','AI訂閱','影音訂閱'],'樂饗購':['餐廳','速食-mcd','外送','百貨','藥妝','日系','飲-sp','飲'],'趣旅行':['海外-日本','海外-韓國','海外-大陸','海外-越南','海外-泰國','海外-線上','海外-歐洲','高鐵','台鐵','交通'],'集精選':['超商','超市','捷運-嗶','捷運-碼','加油']};
     var PR={'集精選':2},bp=null,br=0;
     Object.keys(PM).forEach(function(p){if(PM[p].indexOf(cat)>=0){var pr=PR[p]||r;if(pr>br){br=pr;bp={p:p,r:pr};}}});
     if(!bp){var v=amt*.003;return{tot:v,acts:[{lbl:'一般消費 0.3%（需切換對應方案）',val:v,cap:null,pct:.3,dl:'常態',noReg:1}],inas:[],swN:false,swPlan:'',wn:wn,cf:cf,sw:''};}
-    // 集精選包含捷運！CUBE卡集精選可用於捷運2%
-    if(cat==='捷運-嗶'||cat==='捷運-碼'){
-      var v=amt*(2/100);// 集精選固定2%
-      return{tot:v,acts:[{lbl:'集精選 2%（切換至集精選方案）',val:v,cap:null,pct:2,dl:'~2026/06/30',noReg:1}],inas:[],swN:true,swPlan:'集精選',wn:wn,cf:cf,sw:'切換至【集精選】方案，含全聯/7-11/全家/高鐵/中油及捷運'};
-    }
     if(bd){var bdC=['餐廳','速食-mcd','外送','百貨','飲-sp'];if(bdC.indexOf(cat)>=0){var bdR=(cat==='餐廳'||cat==='外送'||cat==='飲-sp'||cat==='速食-mcd')?10:3.5,v=amt*(bdR/100);return{tot:v,acts:[{lbl:'慶生月方案 '+bdR+'%（生日當月切換）',val:v,cap:null,pct:bdR,dl:'生日當月',boost:bdR>r,noReg:1}],inas:[{lbl:bp.p+'方案 '+bp.r+'%（非慶生月時適用）',dl:'~2026/06/30'}],swN:true,swPlan:'慶生月',wn:wn,cf:cf,sw:'切換至【慶生月】（CUBE App切換），非生日月份切換至【'+bp.p+'】'};}}
     var v=amt*(bp.r/100);return{tot:v,acts:[{lbl:bp.p+' '+bp.r+'%（Level '+lv+'）',val:v,cap:null,pct:bp.r,dl:'~2026/06/30',noReg:1}],inas:bd?[{lbl:'慶生月方案（此類別無加成，切換至'+bp.p+'）',dl:'生日當月'}]:[],swN:true,swPlan:bp.p,wn:wn,cf:cf,sw:bd?'慶生月對「'+cat+'」無加成，建議切換至【'+bp.p+'】方案':''};
   }
@@ -754,7 +728,7 @@ function calcCard(c,cat,amt,onl){
       var rate=pm==='applepay'?1:3,cap2=pm==='applepay'?null:150,v2=pm==='applepay'?amt*.01:Math.min(amt*.03,150);
       return{tot:v2,acts:[{lbl:pm==='applepay'?'Apple Pay實體感應 1%':'線上刷卡/行動支付 3%（不需登錄，需綁定帳單e化）',val:v2,cap:cap2,pct:rate,dl:'~2026/08/31',noReg:1,capNote:pm==='applepay'?'':'逐筆無條件捨去計算'}],inas:[],swN:false,swPlan:'',wn:wn,cf:cf,sw:'月上限NT$150（≈NT$7,500），蝦皮/momo/Uber Eats/高鐵線上訂票等均適用'};
     }
-    if(onl&&UBEX.indexOf(cat)>=0){var v=amt*.01;return{tot:v,acts:[{lbl:'此類別不算線上消費，一般消費 1%',val:v,cap:null,pct:1,dl:'常態',noReg:1}],inas:[{lbl:'線上加碼3%（超商/保費/捷運不納入）',dl:'~2026/08/31'}],swN:false,swPlan:'',wn:'⚠️ 超商、保費即使行動支付也不算線上消費，僅享1%',cf:cf,sw:''};} 
+    if(onl&&UBEX.indexOf(cat)>=0){var v=amt*.01;return{tot:v,acts:[{lbl:'此類別不算線上消費，一般消費 1%',val:v,cap:null,pct:1,dl:'常態',noReg:1}],inas:[{lbl:'線上加碼3%（超商/保費/捷運不納入）',dl:'~2026/08/31'}],swN:false,swPlan:'',wn:'⚠️ 超商、保費即使行動支付也不算線上消費，僅享1%',cf:cf,sw:'';} }
     var v=amt*.01;return{tot:v,acts:[{lbl:(onl?'此類別':'實體刷卡')+' 一般消費 1%',val:v,cap:null,pct:1,dl:'常態',noReg:1}],inas:(!onl&&UBON.indexOf(cat)>=0)?[{lbl:'線上加碼3%（切換「線上刷卡」模式才顯示）',dl:'~2026/08/31'}]:[],swN:false,swPlan:'',wn:wn,cf:cf,sw:(!onl&&UBON.indexOf(cat)>=0)?'⚠️ 切換至「線上刷卡」模式可顯示U Bear卡3%網購回饋':''};
   }
 
@@ -776,7 +750,6 @@ function calcCard(c,cat,amt,onl){
       return{tot:tot,acts:acts2,inas:[],swN:false,swPlan:'',wn:wn,cf:cf,sw:''};
     }
     if(isSpec){
-      var v=amt*.04;if(v>amt*.01+300)v=amt*.01+300;// 基本1%無上限+加碼3%月上限300
       var base2=amt*.01,boost2=Math.min(amt*.03,300);
       acts2.push({lbl:'國內指定通路 1%基本 + 加碼3% = 4%（不需登錄）',val:base2+boost2,cap:null,pct:4,dl:'~2026/07/31',noReg:1,nomp:1,nompNote:cat==='網購'?'⚠️ 建議直接輸入卡號；LINE Pay等行動支付可能無法認列加碼3%':'⚠️ 建議直接在官網綁卡扣款；Google Play/PayPal代扣不適用加碼3%'});
       tot=base2+boost2;
@@ -785,7 +758,7 @@ function calcCard(c,cat,amt,onl){
     var v=amt*.01;return{tot:v,acts:[{lbl:'一般消費 1%（無上限）',val:v,cap:null,pct:1,dl:'常態',noReg:1}],inas:[],swN:false,swPlan:'',wn:wn,cf:cf,sw:''};
   }
 
-  // 一般卡
+  // 一般卡（含Richart切換邏輯）
   var elig=c.b.filter(function(b){
     if(b.ak&&!getAct(b.ak))return false;
     if(b.phy&&onl)return false;
@@ -795,10 +768,19 @@ function calcCard(c,cat,amt,onl){
     if(!mc&&b.c.indexOf('其他')>=0){var hs=c.b.some(function(x){return x!==b&&x.c.indexOf(cat)>=0;});if(!hs)mc=true;}
     if(!mc)return false;if(amt<(b.ms||0))return false;return true;
   });
+
   if(c.sw&&elig.length){
+    // ── Richart 直接刷卡：Pay著刷需綁台新Pay，若選直接刷卡視為「可能無台新Pay」
+    // 仍然顯示Pay著刷3.8%，但標注「需綁台新Pay」
     var best=elig.reduce(function(a,b){return a.p>b.p?a:b;});
     var v=amt*(best.p/100);if(best.cap)v=Math.min(v,best.cap);
-    if(v>0){acts2=[{lbl:best.p+'% ('+(best.sp||'指定方案')+')',val:v,cap:best.cap,pct:best.p,dl:best.dl||'',reg:best.reg||'',ru:best.ru||'',noReg:best.noReg||0}];tot=v;swN=!!best.sp;swPlan=best.sp||'';}
+    if(v>0){
+      var needTP=best.needTP?1:0;
+      acts2=[{lbl:best.p+'% ('+(best.sp||'指定方案')+')',val:v,cap:best.cap,pct:best.p,dl:best.dl||'',reg:best.reg||'',ru:best.ru||'',noReg:best.noReg||0,needTP:needTP}];
+      tot=v;swN=!!best.sp;swPlan=best.sp||'';
+      // 若Pay著刷且直接刷卡，加上說明
+      if(needTP&&pm==='direct'){sw='⚠️ Pay著刷需綁定「台新Pay」才適用。若未綁定，實際回饋為次佳方案（天天刷3.3%等）';}
+    }
   } else {
     elig.forEach(function(b){var v=amt*(b.p/100);if(b.cap)v=Math.min(v,b.cap);if(v>0){acts2.push({lbl:b.p+'%',val:v,cap:b.cap,pct:b.p,dl:b.dl||'',reg:b.reg||'',ru:b.ru||'',boost:b.boost||false,base:b.base||false,noReg:b.noReg||0,nomp:b.nomp||0,nompNote:b.nompNote||''});tot+=v;}});
   }
@@ -819,7 +801,7 @@ function renderSw(){
     h+='<div class="card"><div class="ch">玉山 U Bear卡 — 實體 vs 線上（不需登錄）</div><div class="cb">';
     h+='<div class="info ig" style="margin-bottom:7px;font-size:14px">🌐 <strong>線上刷卡</strong>：最高3%（月上限NT$150≈NT$7,500），需綁定帳單e化，不需登錄</div>';
     h+='<div class="info ib" style="margin-bottom:9px;font-size:14px">🏪 <strong>實體刷卡/Apple Pay感應</strong>：一般消費1%（超商/保費/捷運不論實體/線上均只有1%）</div>';
-    [['蝦皮/momo/酷澎','線上3%','月上限NT$150，不需登錄'],['Uber Eats / 外送','線上3%','月上限NT$150'],['LINE Pay/街口在網路商家','線上3%','行動支付算線上，月上限NT$150'],['Apple Pay實體感應','實體1%','不計入線上！'],['Netflix/Disney+/ChatGPT等','10%','不需登錄，直接綁卡享有，月上限NT$100'],['超商（任何付款方式）','1%','排除在外'],['保費（任何付款方式）','1%','排除在外'],['捷運（任何付款方式）','1%','排除在外，不算線上消費']].forEach(function(r){
+    [['蝦皮/momo/酷澎','線上3%','月上限NT$150，不需登錄'],['Uber Eats / 外送','線上3%','月上限NT$150'],['LINE Pay/街口在網路商家','線上3%','行動支付算線上，月上限NT$150'],['Apple Pay實體感應','實體1%','不計入線上！'],['Netflix/Disney+/ChatGPT等','10%','不需登錄，直接綁卡享有，月上限NT$100'],['超商（任何付款方式）','1%','排除在外'],['保費（任何付款方式）','1%','排除在外'],['捷運（任何付款方式）','1%','排除在外']].forEach(function(r){
       var c2=r[1]==='線上3%'?'#15803d':r[1]==='10%'?'#1e40af':r[1]==='實體1%'?'#dc2626':'#6b7280';
       h+='<div class="sw-row"><div style="flex:1"><div style="font-size:15px;font-weight:600">'+r[0]+'</div><div style="font-size:13px;color:#6b7280">'+r[2]+'</div></div><div style="font-size:15px;font-weight:700;color:'+c2+';margin-left:10px;flex-shrink:0">'+r[1]+'</div></div>';
     });
@@ -833,7 +815,7 @@ function renderSw(){
     h+='<div class="card"><div class="ch">國泰 CUBE卡（Mastercard）— 6大方案</div><div class="cb">';
     h+='<div class="info ir" style="margin-bottom:7px;font-size:14px">⚠️ 日本賞為CUBE JCB卡限定，Mastercard不適用</div>';
     h+='<div class="info ia" style="margin-bottom:8px;font-size:14px">每日切換一次（23:59前）。Level'+lv+'：指定方案'+r+'%</div>';
-    [['玩數位',r,'網購/AI訂閱/影音串流/遊戲'],['樂饗購',r,'百貨/外送/餐廳/麥當勞(APP加碼)/手搖飲/UNIQLO'],['趣旅行',r,'所有海外消費/旅行社/Klook/航空/高鐵台鐵/Uber'],['集精選',2,'全聯/7-11/全家/家樂福/高鐵/中油/捷運（固定2%）'],['慶生月','3.5~10','壽星當月！指定餐廳/手搖飲/KTV/遊樂園最高10%'],['童樂匯','3.5~10','親子餐廳/嬰幼童品牌最高10%']].forEach(function(row){
+    [['玩數位',r,'網購/AI訂閱/影音串流/遊戲'],['樂饗購',r,'百貨/外送/餐廳/麥當勞(APP加碼)/手搖飲/UNIQLO'],['趣旅行',r,'所有海外消費/旅行社/Klook/航空/高鐵台鐵/Uber'],['集精選',2,'全聯/7-11/全家/家樂福/捷運/高鐵/中油（固定2%）'],['慶生月','3.5~10','壽星當月！指定餐廳/手搖飲/KTV最高10%'],['童樂匯','3.5~10','親子餐廳/嬰幼童品牌最高10%']].forEach(function(row){
       var c2=typeof row[1]==='number'&&row[1]>=3?'#059669':typeof row[1]==='string'?'#d97706':'#6b7280';
       h+='<div class="sw-row"><div style="flex:1"><div style="font-size:15px;font-weight:600">'+row[0]+'</div><div style="font-size:13px;color:#6b7280">'+row[2]+'</div></div><div style="font-size:17px;font-weight:800;color:'+c2+';margin-left:10px;flex-shrink:0">'+row[1]+'%</div></div>';
     });
@@ -845,12 +827,13 @@ function renderSw(){
 
   // Richart
   if(selC&&selC.has(3)){
-    h+='<div class="card"><div class="ch">台新 Richart卡 — 7大切換刷</div><div class="cb"><div class="info ia" style="margin-bottom:8px;font-size:14px">需Richart帳戶自動扣繳才享最高3.8%；LINE Pay/街口僅Pay著刷/假日刷支援</div>';
-    [['Pay著刷',3.8,'台新Pay 3.8%；LINE Pay 2.3%；捷運QR乘車碼也算！'],['天天刷',3.3,'超商/量販/交通/高鐵/台鐵/加油/藥妝'],['大筆刷',3.3,'百貨/Outlet/UNIQLO/大創'],['好饗刷',3.3,'全台餐飲/麥當勞/外送/KTV（含手搖飲）'],['數趣刷',3.3,'網購/AI/影音/遊戲'],['玩旅刷',3.3,'所有海外/航空/訂房/Uber/高鐵/台鐵'],['假日刷',2,'節假日不限通路（LINE Pay/街口均可）']].forEach(function(row){
+    h+='<div class="card"><div class="ch">台新 Richart卡 — 7大切換刷</div><div class="cb">';
+    h+='<div class="info ia" style="margin-bottom:8px;font-size:14px">⚠️ <strong>Pay著刷（3.8%）需綁定「台新Pay」才適用</strong>；未綁定台新Pay時請改選天天刷/好饗刷等方案<br>LINE Pay走Pay著刷(2.3%)；街口走假日刷(2%)</div>';
+    [['Pay著刷',3.8,'台新Pay 3.8%（需綁台新Pay）；LINE Pay 2.3%'],['天天刷',3.3,'超商/量販/交通/高鐵/台鐵/加油/藥妝（無需台新Pay）'],['大筆刷',3.3,'百貨/Outlet/UNIQLO/大創（無需台新Pay）'],['好饗刷',3.3,'全台餐飲/麥當勞/外送/KTV（無需台新Pay）'],['數趣刷',3.3,'網購/AI/影音/遊戲（無需台新Pay）'],['玩旅刷',3.3,'所有海外/航空/訂房/Uber/高鐵/台鐵（無需台新Pay）'],['假日刷',2,'節假日不限通路（LINE Pay/街口均可）']].forEach(function(row){
       var c2=row[1]>=3?'#059669':row[1]>=2?'#1d4ed8':'#6b7280';
       h+='<div class="sw-row"><div style="flex:1"><div style="font-size:15px;font-weight:600">'+row[0]+'</div><div style="font-size:13px;color:#6b7280">'+row[2]+'</div></div><div style="font-size:17px;font-weight:800;color:'+c2+';margin-left:10px;flex-shrink:0">'+row[1]+'%</div></div>';
     });
-    h+='<div class="info ig mtn" style="font-size:14px">🚇 <strong>捷運乘車碼優惠</strong>：舊戶可在Richart Life App領取5次免費搭乘券（~2026/06/30，限量12,000名）！需綁定台新Pay後掃碼進站</div>';
+    h+='<div class="info ig mtn" style="font-size:14px">🚇 <strong>捷運乘車碼優惠</strong>：舊戶可在Richart Life App領取5次免費搭乘券（~2026/06/30，限量12,000名），需先綁定台新Pay後掃碼進站</div>';
     h+='<div class="info ib mtn" style="font-size:14px">保費1.3%免切換 · 累計NT$20,000享機場接送最多2次 · 累計NT$6,000享機車停車8次</div>';
     h+='<div class="lrow"><a href="https://richart.tw/TSDIB_RichartWeb/card/credit-card" target="_blank" class="lbtn lsite">🔗 Richart官網</a><a href="https://richart.tw/TSDIB_RichartWeb/card/credit-card" target="_blank" class="lbtn lreg">📋 Richart Life App（切換+捷運券）</a></div>';
     h+='</div></div>';
@@ -870,7 +853,7 @@ function renderSw(){
   if(selC&&selC.has(11)){
     h+='<div class="card"><div class="ch">聯邦吉鶴卡 — 日本刷卡提醒</div><div class="cb"><div class="info ig" style="margin-bottom:8px;font-size:15px">日本最佳：Apple Pay(QUICPay)感應，前月帳單≥NT$30,000合計最高8%</div>';
     h+='<div style="font-size:15px;color:#374151;line-height:1.8">結帳時告知「QUICPay」<br>指定通路（7-11/LAWSON/東迪/環球/三越/BicCamera/唐吉訶德等）再+3%，月上限NT$600<br>需事先登錄（活動期間登錄1次即可）<br>⛔ 聯邦自辦機場接送已截止 · 🏨 機場貴賓室（日/泰/韓/新）每年2次</div>';
-    h+='<div class="info ia mtn" style="font-size:14px">🏪 <strong>國內日系名店23家</strong>（UNIQLO/GU/大創/松本清/日藥本舖/TSUTAYA/思夢樂/GLOBAL WORK等）：加碼4%（月上限NT$500），<strong>不需登錄</strong><br><span class="no-mp-tag">🚫 不適用行動支付</span> 限實體卡片及感應式交易</div>';
+    h+='<div class="info ia mtn" style="font-size:14px">🏪 <strong>國內日系名店23家</strong>（UNIQLO/GU/大創/松本清/日藥本舖等）：加碼4%（月上限NT$500），<strong>不需登錄</strong><br><span class="no-mp-tag">🚫 不適用行動支付</span> 限實體卡片及感應式交易</div>';
     h+='<div class="lrow"><a href="https://activity.ubot.com.tw/2026JiHoCard/index.htm" target="_blank" class="lbtn lsite">🔗 吉鶴卡官網</a><a href="https://activity.ubot.com.tw/2026JiHoCard/index.htm" target="_blank" class="lbtn lreg">📋 日系名店清單+日本加碼登錄</a><a href="https://www.specialoffers.jcb/zh-tw/services/travel/" target="_blank" class="lbtn lnote">📋 JCB機場接送2026確認</a></div>';
     h+='</div></div>';
   }
